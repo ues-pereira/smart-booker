@@ -1,0 +1,31 @@
+FROM ruby:3.3.1-alpine as Builder
+
+RUN apk add --update --no-cache \
+  build-base \
+  curl \
+  tzdata \
+  ca-certificates
+
+RUN update-ca-certificates
+
+ENV LC_ALL en_US.UTF-8
+ARG LOCAL_TIME=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$LOCAL_TIME \
+  /etc/localtime
+
+ARG APP_PATH=/opt/app/
+WORKDIR $APP_PATH
+
+# Gemfiles
+COPY Gemfile* $APP_PATH
+
+# Install gems
+RUN export BUNDLER_VERSION=$(awk '/BUNDLED WITH/ { getline ; print $1 }' Gemfile.lock) \
+  && gem install bundler --version $BUNDLER_VERSION \
+  && gem install brakeman -v 5.4.1 \
+  && bundle install -j4 --retry 3 \
+  && bundle config --global frozen 1
+
+COPY docker_entrypoint.sh /usr/bin/docker_entrypoint.sh
+RUN chmod +x /usr/bin/docker_entrypoint.sh
+ENTRYPOINT ["docker_entrypoint.sh"]

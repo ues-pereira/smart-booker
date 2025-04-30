@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: smart_booker_app
+    environment:
+      MONGODB_USER: mongo
+      MONGODB_PASSWORD: mongo
+      MONGODB_HOSTS: mongo:27017
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/opt/app
+    depends_on:
+      - mongo
+    command: ["rails", "server", "-b", "0.0.0.0"]
+
+  mongo:
+    image: mongo:8.0
+    container_name: smart_booker_mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGO_INITDB_DATABASE: smart_booker_development
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb:/data/db
+
+volumes:
+  mongodb:
